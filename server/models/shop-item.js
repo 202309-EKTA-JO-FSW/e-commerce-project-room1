@@ -1,11 +1,6 @@
 const mongoose = require('mongoose');
 
 const shopItem = new mongoose.Schema({
-    ID:{
-        type: Number,
-        required:true,
-        unique: true
-    },
   title: {
     type: String,
     required: true,
@@ -30,10 +25,9 @@ const shopItem = new mongoose.Schema({
     required: true
   },
   genre: {
-    type: String,
+    type: [String],
     required: true,
-    enum: ['Clothing', 'Electronics', 'Home', 'Toys', 'Other']
-  },
+  }
 });
 
 module.exports = mongoose.model('ShopItem', shopItem);
