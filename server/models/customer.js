@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const cartSchema = new mongoose.Schema({
     shopItems: [ 
         {  
-            itemID: {
+            itemId: {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: 'ShopItem'
             },
@@ -19,7 +19,7 @@ const cartSchema = new mongoose.Schema({
 const orderSchema = new mongoose.Schema({
     shopItems: [
         {
-            itemID: {
+            itemId: {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: 'ShopItem'
             },
@@ -46,9 +46,16 @@ const customerSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    cart: cartSchema,
-    order: orderSchema
-
+    cart: {
+        type: cartSchema,
+        default: {},
+        required: true
+    },
+    order: {
+        type: orderSchema,
+        default: {},
+        required: true
+    },
 })
 
 const Customer = mongoose.model('Customer', customerSchema)

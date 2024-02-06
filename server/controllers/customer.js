@@ -3,6 +3,17 @@ const mongoose = require('mongoose')
 const Customer = require('../models/customer')
 const ShopItem = require('../models/shop-item')
 
+const getAllCustomers = async (req, res) => {
+    const customers = await Customer.find({});
+    res.json(customers)
+}
+
+const addCustomer = async (req, res) => {
+    const customerDetails = req.body
+    const customer = await Customer.create(customerDetails)
+    res.json(customer)
+}
+
 const filterShopItems = async (req, res) => {
     const { genre, price } = req.body
     let query = {}
@@ -54,6 +65,13 @@ const searchShopItems = async (req, res) => {
     }
  }
 
+ const getCart = async (req, res) => {
+    const customerId = req.params.customerId
+    const customer = await Customer.findById(customerId).populate('cart.shopItems')
+    const cartItems = customer.cart.shopItems;
+    res.json(cartItems)
+ }
+
  const addToCart = async (req, res) => {
     const customerId = req.params.customerId
     const { itemId, quantity } = req.body
@@ -77,7 +95,8 @@ const searchShopItems = async (req, res) => {
 
         await ShopItem.findByIdAndUpdate(itemId, { $inc: { count: -quantity } }, { new: true } )
 
-        customer.cart.push({itemId, quantity})
+        customer.cart.shopItems.push({itemId, quantity})
+        await customer.save()
 
         res.status(200).json({ message: 'Item added to cart successfully' });
     } catch (err) {
@@ -95,22 +114,30 @@ const checkout = async (req, res) => {
         }
 
         let total = 0;
-        for (const item of customer.cart) {
-            const itemId = req.body
+        for (const item of customer.cart.shopItems) {
+            const { itemId, quantity } = item;
 
             const shopItem = await ShopItem.findById(itemId);
             if (!shopItem) {
                 return res.status(422).json({ message: 'Item not found' });
             }
-            total += shopItem.price * item.quantity;
+
+            if (shopItem.availableCount < quantity) {
+                return res.status(422).json({ message: 'Insufficient available count for item: ' + shopItem.title });
+            }
+
+            shopItem.availableCount -= quantity;
+            await shopItem.save(); 
+
+            total += shopItem.price * quantity;
         }
 
         const order = {
-            items: customer.cart,
+            items: customer.cart.shopItems,
             total: total
         };
 
-        customer.cart = [];
+        customer.cart.shopItems = [];
         await customer.save();
 
         res.status(200).json({ message: 'Order created successfully', order });
@@ -133,4 +160,4 @@ const getSingleItem = async (req, res) => {
 }
 
 
-module.exports = { filterShopItems, searchShopItems, addToCart, checkout, getSingleItem }
+module.exports = { getAllCustomers, addCustomer, filterShopItems, searchShopItems, getCart, addToCart, checkout, getSingleItem }

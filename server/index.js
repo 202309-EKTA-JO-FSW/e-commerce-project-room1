@@ -22,6 +22,6 @@ app.listen(port, () => {
 });
 
 app.use('/admin', adminRouter)
-app.use('/customer', customerRouter)
+app.use('/customers', customerRouter)
 
 module.exports = app;
