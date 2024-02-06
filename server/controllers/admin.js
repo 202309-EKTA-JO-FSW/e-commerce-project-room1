@@ -49,7 +49,7 @@ const searchShopItems = async (req, res) => {
                 : searchParams.genre;
         }
     const searchResults = await ShopItem.find(query)
-    res.status(200).json({ message: 'Search results', items: searchResults });
+    res.status(200).json({ message: 'Search Results', items: searchResults });
 } catch (err) {
     res.status(422).json({ message: 'Error searching for items', error: err.message });
 }
