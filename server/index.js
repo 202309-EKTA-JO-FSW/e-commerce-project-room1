@@ -1,5 +1,9 @@
 const express = require("express");
+const adminRouter = require('./routes/admin')
+const customerRouter = require('./routes/customer')
+
 require("dotenv").config();
+
 
 const connectToMongo = require("./db/connection");
 
@@ -16,5 +20,8 @@ app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
   connectToMongo();
 });
+
+app.use('/admin', adminRouter)
+app.use('/customer', customerRouter)
 
 module.exports = app;
