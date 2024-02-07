@@ -1,6 +1,8 @@
 const Admin = require('../models/admin')
 const ShopItem = require('../models/shop-item')
 
+  
+  
 const addNewShopItem = async (req, res) => {
     const shopItem = req.body
     try {
@@ -55,4 +57,4 @@ const searchShopItems = async (req, res) => {
 }
 }
 
-module.exports = { addNewShopItem, deleteShopItem, updateShopItem, searchShopItems }
+module.exports = { addNewShopItem, deleteShopItem, updateShopItem, searchShopItems,router }
