@@ -1,9 +1,50 @@
 const mongoose = require('mongoose')
-
+const jwt = require('jsonwebtoken')
 const Customer = require('../models/customer')
 const ShopItem = require('../models/shop-item')
+const verifyToken = require('../middlewares/verification');
+// const { OAuth2Client } = require('google-auth-library');
+const generateToken = async (user) => {
+    return jwt.sign({ id: user.id }, 'alooooo', { expiresIn: '1h' });
+  }
 
-const getAllCustomers = async (req, res) => {
+
+// const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const signUp = async (req, res) => {
+    const { username, email, password } = req.body;
+
+    try {
+
+        if (username && email && password) {
+            const customer = await Customer.create({ username, email, password });
+            const token = await generateToken(customer);
+            res.status(200).json({ message: 'Sign-up successful', customer, token})
+        }
+    } catch (err) {
+        res.status(500).json({ message: 'Sign-up failed', error: err.message });
+    }
+};
+
+// const signIn = async (req, res) => {
+//     const { username, email, password } = req.body;
+
+//     try {
+//         if (username && email && password) {
+//             const customer = await Customer.findOne({ username });
+//             if (!customer)
+//                 return res.status(404).json({ message: 'Customer not found' });
+
+//             const token = await generateToken(customer)
+//             res.status(200).json({ message: 'Signin successful', customer, token})
+
+//         } else {
+//         res.status(400).json({ message: 'Email and password are required' })
+//     }} catch (err) {
+
+//     }
+// }
+const getAllCustomers = async (_, res) => {
     const customers = await Customer.find({});
     res.json(customers)
 }
@@ -77,6 +118,11 @@ const searchShopItems = async (req, res) => {
     const { itemId, quantity } = req.body
 
     try {
+        const token = req.headers.authorization;
+        if (!token) {
+            return res.status(403).json({ message: 'who tf are you' });
+        }
+
         const customer = await Customer.findById(customerId);
         if (!customer) {
             return res.status(422).json({ message: 'Customer not found' });
@@ -160,4 +206,5 @@ const getSingleItem = async (req, res) => {
 }
 
 
-module.exports = { getAllCustomers, addCustomer, filterShopItems, searchShopItems, getCart, addToCart, checkout, getSingleItem }
+module.exports = { getAllCustomers, addCustomer, filterShopItems, searchShopItems, getCart, addToCart, checkout, getSingleItem, 
+signUp, }

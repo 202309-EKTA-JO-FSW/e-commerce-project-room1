@@ -1,9 +1,13 @@
 const express = require("express");
 const adminRouter = require('./routes/admin')
 const customerRouter = require('./routes/customer')
+const jwt = require('jsonwebtoken')
 
 require("dotenv").config();
 
+const generateToken = async (user) => {
+  return jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+}
 
 const connectToMongo = require("./db/connection");
 
@@ -24,4 +28,12 @@ app.listen(port, () => {
 app.use('/admin', adminRouter)
 app.use('/customers', customerRouter)
 
-module.exports = app;
+app.get('/test', async (req, res) => {
+    const user = { id: '65c27f3bbfce12315a4c229e' };
+    const token = await generateToken(user);
+    res.json({ token });
+});
+
+
+
+module.exports = {app, generateToken };
