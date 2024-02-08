@@ -14,8 +14,8 @@ router.post("/:customerId/checkout", customerController.checkout);
 router.get("/:id", customerController.getSingleItem)
 router.get('/', customerController.getAllCustomers)
 
-// router.post("/signup", customerController.signUp);
-// router.get("/signin", customerController.signin);
+router.post("/signup", customerController.signUp);
+router.post("/signin", customerController.signIn);
 // router.get("/", customerController.signout);
 
 // router.get("/", customerController.profile);
