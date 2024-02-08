@@ -2,7 +2,6 @@ const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
 const Customer = require('../models/customer')
 const ShopItem = require('../models/shop-item')
-const verifyToken = require('../middlewares/verification');
 // const { OAuth2Client } = require('google-auth-library');
 // const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -16,10 +15,15 @@ const signUp = async (req, res) => {
     try {
 
         if (username && email && password) {
-            const customer = await Customer.create({ username, email, password });
+            const customer = await Customer.create({ username, email, password });    
+
             const token = await generateToken(customer);
             res.status(200).json({ message: 'Sign-up successful', customer, token})
         }
+        else {
+            res.status(500).json({ message: 'All fields are required' });
+        }
+
     } catch (err) {
         res.status(500).json({ message: 'Sign-up failed', error: err.message });
     }
@@ -30,22 +34,50 @@ const signIn = async (req, res) => {
 
     try {
         if (username && email && password) {
-            const customer = await Customer.findOne({ username });
+            const customer = await Customer.findOne({ username, email, password });
             if (!customer)
-                return res.status(404).json({ message: 'Customer not found' });
+                return res.status(404).json({ message: 'Invalid Username, Email or Password' });
+
+            if (customer.__v > 0) 
+                return res.status(404).json({ message: 'already signedIn' });
+
+            // if (customer.token) 
+            //         return res.status(400).json({ message: 'already signedIn' });
+                
 
             const token = await generateToken(customer);
-            customer.token = token;
             await customer.save();
 
-            res.status(200).json({ message: 'Signin successful', customer, token: customer.token });
+            res.status(200).json({ message: 'Signin successful', customer, token: token });
         } else {
-            res.status(400).json({ message: 'Email and password are required' });
+            res.status(400).json({ message: 'Username, Email or Password are required' });
         }
     } catch (err) {
         res.status(500).json({ message: 'Sign-in failed', error: err.message });
     }
 }
+
+const signOut = async (req, res) => {
+    const customerId = req.body.customerId
+    try {
+        const customer = await Customer.findById(customerId);
+        if (!customer) {
+            return res.status(404).json({ message: 'Customer not found' });
+        }
+
+        // if (!customer.token) {
+        //     return res.status(403).json({ message: 'Already signed out' });
+        // }
+
+        customer.token = null
+        await customer.save();
+        
+        res.status(200).json({ message: 'Signout successful' });
+    } catch (err) {
+        res.status(500).json({ message: 'Sign-out failed', error: err.message });
+    }
+}
+
 
 const getAllCustomers = async (_, res) => {
     const customers = await Customer.find({});
@@ -121,18 +153,13 @@ const searchShopItems = async (req, res) => {
     const { itemId, quantity } = req.body
 
     try {
-        const token = req.headers.authorization;
-        if (!token) {
-            return res.status(403).json({ message: 'who tf are you' });
-        }
-
         const customer = await Customer.findById(customerId);
         if (!customer) {
             return res.status(422).json({ message: 'Customer not found' });
         }
 
         const item = await ShopItem.findOne({ itemId })    
-        if (!item) {
+        if (!item ) {
             return res.status(422).json({ message: 'Item not found' })
         }
         if (item.quantity === 0) {
@@ -160,6 +187,10 @@ const checkout = async (req, res) => {
         const customer = await Customer.findById(customerId);
         if (!customer) {
             return res.status(422).json({ message: 'Customer not found' });
+        }
+
+        if (customer.cart.shopItems.length === 0) {
+            return res.status(422).json({ message: 'Add items to the cart before checking out.' });
         }
 
         let total = 0;
@@ -210,4 +241,4 @@ const getSingleItem = async (req, res) => {
 
 
 module.exports = { getAllCustomers, addCustomer, filterShopItems, searchShopItems, getCart, addToCart, checkout, getSingleItem, 
-signUp, signIn }
+signUp, signIn, signOut }
